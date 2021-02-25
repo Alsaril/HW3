@@ -116,11 +116,12 @@ public:
     virtual void execute(Book& book) {
         std::cin >> query;
 
-        std::vector<std::shared_ptr<Person>> results;
+        std::vector<std::pair<int, std::shared_ptr<Person>>> results;
         book.find(query, results);
 
-        for (auto& person: results) {
-            person->print(std::cout);
+        for (auto& pair: results) {
+            std::cout << pair.first << '\t';
+            pair.second->print(std::cout);
             std::cout << '\n';
         }
     }

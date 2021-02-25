@@ -135,10 +135,10 @@ public:
         remove(from);
     }
 
-    void find(const std::string& query, std::vector<std::shared_ptr<Person>>& results) {
+    void find(const std::string& query, std::vector<std::pair<int, std::shared_ptr<Person>>>& results) {
         for (auto i = reverseIndex.lower_bound(query); i != reverseIndex.end() && i->first.rfind(query, 0) != std::string::npos; i++) {
             for (auto pos: i->second) {
-                results.push_back(content[pos]);
+                results.emplace_back(pos, content[pos]);
             }
         }
     }
