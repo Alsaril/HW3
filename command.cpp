@@ -121,6 +121,7 @@ public:
 
         for (auto& person: results) {
             person->print(std::cout);
+            std::cout << '\n';
         }
     }
 };
@@ -131,6 +132,15 @@ public:
 
     virtual void execute(Book& book) {
         book.sort();
+    }
+};
+
+class ClearCommand: public Command {
+public:
+    ClearCommand(): Command(false, true, "clears content") {}
+
+    virtual void execute(Book& book) {
+        book.clear();
     }
 };
 

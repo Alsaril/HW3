@@ -3,8 +3,8 @@
 #include "models.cpp"
 #include "command.cpp"
 
-void printHelp(const std::unordered_map<std::string, std::unique_ptr<PhoneBook::Command>>& commands) {
-    std::cout << "Unknown command, ignoring\n" << "List of possible commands:\n";
+void printHelp(const std::string& command, const std::unordered_map<std::string, std::unique_ptr<PhoneBook::Command>>& commands) {
+    std::cout << "Unknown command " << command << ", ignoring\n" << "List of possible commands:\n";
     for (const auto& [key, command]: commands) {
         std::cout << key << "\t" << command->description() << '\n';
     }
@@ -20,19 +20,19 @@ int main() {
     commands["move"] = std::make_unique<PhoneBook::MoveCommand>();
     commands["find"] = std::make_unique<PhoneBook::FindCommand>();
     commands["sort"] = std::make_unique<PhoneBook::SortCommand>();
+    commands["clear"] = std::make_unique<PhoneBook::ClearCommand>();
 
     std::string snapshotPath = "snapshot";
-	PhoneBook::Book book;
+    PhoneBook::Book book;
     book.load(snapshotPath);
 
     std::string command;
 
     while (true) {
         std::cin >> command;
-        std::cout << command << '\n';
         auto pos = commands.find(command);
         if (pos == commands.end()) {
-            printHelp(commands);
+            printHelp(command, commands);
             continue;
         }
         auto& realCommand = pos->second;
