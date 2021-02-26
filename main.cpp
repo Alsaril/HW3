@@ -10,7 +10,7 @@ void printHelp(const std::string& command, const std::unordered_map<std::string,
     }
 }
 
-int main() {
+int main(int argc, char** argv) {
     std::unordered_map<std::string, std::unique_ptr<PhoneBook::Command>> commands;
     commands["edit"] = std::make_unique<PhoneBook::EditCommand>();
     commands["swap"] = std::make_unique<PhoneBook::SwapCommand>();
@@ -21,8 +21,14 @@ int main() {
     commands["find"] = std::make_unique<PhoneBook::FindCommand>();
     commands["sort"] = std::make_unique<PhoneBook::SortCommand>();
     commands["clear"] = std::make_unique<PhoneBook::ClearCommand>();
+    commands["nop"] = std::make_unique<PhoneBook::NopCommand>();
 
-    std::string snapshotPath = "snapshot";
+    if (argc < 2) {
+        std::cout << "Snapshot path required\n";
+        return 1;
+    }
+    std::string snapshotPath(argv[1]);
+    bool debug = argc > 2 && !strcmp("debug", argv[2]);
     PhoneBook::Book book;
     book.load(snapshotPath);
 
@@ -42,6 +48,9 @@ int main() {
         }
         if (realCommand->terminate()) {
             return 0;
+        }
+        if (debug) {
+            book.printState();
         }
     }
 }

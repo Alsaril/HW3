@@ -28,15 +28,16 @@ typedef std::map<int, std::shared_ptr<Person>> PersonMap;
 class Book {
 private:
     PersonMap content;
-    std::map<std::string, std::list<int>, std::less<std::string>> reverseIndex;
+    std::map<std::string, std::list<std::pair<int, std::shared_ptr<Person>>>> reverseIndex;
 
-    void addToReverseIndex(int index, const Person& person) {
-        auto rPos = reverseIndex.find(person.phone);
+    void addToReverseIndex(int index, std::shared_ptr<Person> person) {
+        const std::string& key = person->phone;
+        auto rPos = reverseIndex.find(key);
         if (rPos == reverseIndex.end()) {
-            reverseIndex[person.phone] = {};
-            rPos = reverseIndex.find(person.phone);
+            reverseIndex[key] = {};
+            rPos = reverseIndex.find(key);
         }
-        rPos->second.push_back(index);
+        rPos->second.emplace_back(index, person);
     }
 
     void removeFromReverseIndex(PersonMap::iterator pos) {
@@ -46,21 +47,28 @@ private:
             return;
         }
         auto& list = rPos->second;
-        for (auto i = list.begin(); i != list.end(); i++) {
-            if (*i == pos->first) {
-                list.erase(i);
+        int size = 0;
+        for (auto i = list.begin(); i != list.end(); i++, size++) {
+            if (i->first == pos->first) {
+                i = list.erase(i);
+                if (i != list.end()) {
+                    size++;
+                }
                 break;
             }
+        }
+        if (size == 0) {
+            reverseIndex.erase(rPos);
         }
     }
 
 public:
-    void set(int index, const Person& person) { // insert or replace
+    void set(int index, std::shared_ptr<Person> person) { // insert or replace
         auto pos = content.find(index);
         if (pos != content.end()) {
             removeFromReverseIndex(pos);
         }
-        content[index] = std::make_shared<Person>(person);
+        content[index] = person;
         addToReverseIndex(index, person);
     }
 
@@ -74,8 +82,8 @@ public:
         removeFromReverseIndex(pos1);
         removeFromReverseIndex(pos2);
         std::swap(pos1->second, pos2->second);
-        addToReverseIndex(pos1->first, *(pos1->second));
-        addToReverseIndex(pos2->first, *(pos2->second));
+        addToReverseIndex(pos1->first, pos1->second);
+        addToReverseIndex(pos2->first, pos2->second);
     }
 
     void remove(int index) { // remove entry
@@ -112,12 +120,12 @@ public:
             in >> index;
             dummy.read(in);
 
-            set(index, dummy);
+            set(index, std::make_shared<Person>(dummy));
         }
         in.close();
     }
 
-    void add(const Person& person) {
+    void add(std::shared_ptr<Person> person) {
         if (content.size() == 0) {
             set(1, person);
         } else {
@@ -131,14 +139,14 @@ public:
             std::cout << "No entry with index " << from << "is found\n";
             return;
         }
-        set(to, *(pos->second));
+        set(to, pos->second);
         remove(from);
     }
 
     void find(const std::string& query, std::vector<std::pair<int, std::shared_ptr<Person>>>& results) {
         for (auto i = reverseIndex.lower_bound(query); i != reverseIndex.end() && i->first.rfind(query, 0) != std::string::npos; i++) {
-            for (auto pos: i->second) {
-                results.emplace_back(pos, content[pos]);
+            for (const auto& [pos, person]: i->second) {
+                results.emplace_back(pos, person);
             }
         }
     }
@@ -153,13 +161,35 @@ public:
         std::sort(tmp.begin(), tmp.end(), [](const auto& p1, const auto& p2) { return p1->lastName < p2->lastName; });
         
         for (int i = 0; i < tmp.size(); i++) {
-            set(i + 1, *tmp[i]);
+            set(i + 1, tmp[i]);
         }
     }
 
     void clear() {
         content.clear();
         reverseIndex.clear();
+    }
+
+    void printState() {
+        std::cout << "\n##### DEBUG #####\n#\n";
+        std::cout << "#  Plain storage:\n";
+        for (const auto& [key, person]: content) {
+            std::cout << "#  " << key << " -> ";
+            person->print(std::cout);
+            std::cout << '\n';
+        }
+        std::cout << '\n';
+        std::cout << "#  Reverse index:\n";
+        for (const auto& [key, list]: reverseIndex) {
+            std::cout << "#  " << key << " -> ";
+            for (const auto& [index, person]: list) {
+                std::cout << '(' << index << ", ";
+                person->print(std::cout);
+                std::cout << "), ";
+            }
+            std::cout << '\n';
+        }
+        std::cout << "#\n#################\n";
     }
 };
 

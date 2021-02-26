@@ -31,7 +31,7 @@ public:
     virtual void execute(Book& book) {
         std::cin >> index;
         dummy.read(std::cin);
-        book.set(index, dummy);
+        book.set(index, std::make_shared<Person>(dummy));
     }
 };
 
@@ -75,7 +75,7 @@ public:
 
     virtual void execute(Book& book) {
         dummy.read(std::cin);
-        book.add(dummy);
+        book.add(std::make_shared<Person>(dummy));
     }
 };
 
@@ -145,4 +145,8 @@ public:
     }
 };
 
+class NopCommand: public Command {
+public:
+    NopCommand(): Command(false, false, "does nothing") {}
+};
 } // namespace PhoneBook
