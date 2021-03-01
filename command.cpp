@@ -29,8 +29,7 @@ public:
     EditCommand(): Command(false, true, "edits person on desired position: <index> <last_name> <first_name> <middle_name> <phone>") {}
 
     virtual void execute(Book& book) {
-        std::cin >> index;
-        dummy.read(std::cin);
+        std::cin >> index >> dummy;
         book.set(index, std::make_shared<Person>(dummy));
     }
 };
@@ -54,9 +53,7 @@ public:
 
     virtual void execute(Book& book) {
         book.forEach([](int index, const Person& person) {
-            std::cout << index << '\t';
-            person.print(std::cout);
-            std::cout << '\n';
+            std::cout << index << '\t' << person << '\n';
         });
     }
 };
@@ -74,7 +71,7 @@ public:
     AddCommand(): Command(false, true, "inserts new person to the end of the book: <last_name> <first_name> <middle_name> <phone>") {}
 
     virtual void execute(Book& book) {
-        dummy.read(std::cin);
+        std::cin >> dummy;
         book.add(std::make_shared<Person>(dummy));
     }
 };
@@ -115,15 +112,9 @@ public:
 
     virtual void execute(Book& book) {
         std::cin >> query;
-
-        std::vector<std::pair<int, std::shared_ptr<Person>>> results;
-        book.find(query, results);
-
-        for (auto& pair: results) {
-            std::cout << pair.first << '\t';
-            pair.second->print(std::cout);
-            std::cout << '\n';
-        }
+        book.find(query, [](int index, Person& person) {
+            std::cout << index << '\t' << person << '\n';
+        });
     }
 };
 

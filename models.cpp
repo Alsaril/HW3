@@ -12,15 +12,15 @@ namespace PhoneBook {
 
 struct Person {
     std::string firstName, lastName, middleName, phone;
-
-    void read(std::istream& in) {
-        in >> lastName >> firstName >> middleName >> phone;
-    }
-
-    void print(std::ostream& out) const {
-        out << lastName << ' ' << firstName << ' ' << middleName << ' ' << phone;
-    }
 };
+
+std::istream& operator>>(std::istream& in, Person& person) {
+    return in >> person.lastName >> person.firstName >> person.middleName >> person.phone;
+}
+
+std::ostream& operator<<(std::ostream& out, const Person& person) {
+    return out << person.lastName << ' ' << person.firstName << ' ' << person.middleName << ' ' << person.phone;
+}
 
 typedef std::map<int, std::shared_ptr<Person>> PersonMap;
 
@@ -104,9 +104,7 @@ public:
     void save(const std::string& path) {
         std::ofstream out(path);
         forEach([&out](int index, const Person& person) {
-            out << index << '\t';
-            person.print(out);
-            out << '\n';
+            out << index << '\t' << person << '\n';
         });
         out.close();
     }
@@ -117,20 +115,15 @@ public:
 
         std::ifstream in(path);
         while (in.is_open() && !in.eof()) {
-            in >> index;
-            dummy.read(in);
-
+            in >> index >> dummy;
             set(index, std::make_shared<Person>(dummy));
         }
         in.close();
     }
 
     void add(std::shared_ptr<Person> person) {
-        if (content.size() == 0) {
-            set(1, person);
-        } else {
-            set(content.rbegin()->first + 1, person); // max + 1
-        }
+        int index = content.size() == 0 ? 1 : content.rbegin()->first + 1;
+        set(index, person);
     }
 
     void move(int from, int to) {
@@ -143,10 +136,10 @@ public:
         remove(from);
     }
 
-    void find(const std::string& query, std::vector<std::pair<int, std::shared_ptr<Person>>>& results) {
+    void find(const std::string& query, std::function<void(int, Person&)> consumer) {
         for (auto i = reverseIndex.lower_bound(query); i != reverseIndex.end() && i->first.rfind(query, 0) != std::string::npos; i++) {
             for (const auto& [pos, person]: i->second) {
-                results.emplace_back(pos, person);
+                consumer(pos, *person);
             }
         }
     }
@@ -174,18 +167,14 @@ public:
         std::cout << "\n##### DEBUG #####\n#\n";
         std::cout << "#  Plain storage:\n";
         for (const auto& [key, person]: content) {
-            std::cout << "#  " << key << " -> ";
-            person->print(std::cout);
-            std::cout << '\n';
+            std::cout << "#  " << key << " -> " << *person << '\n';
         }
         std::cout << '\n';
         std::cout << "#  Reverse index:\n";
         for (const auto& [key, list]: reverseIndex) {
             std::cout << "#  " << key << " -> ";
             for (const auto& [index, person]: list) {
-                std::cout << '(' << index << ", ";
-                person->print(std::cout);
-                std::cout << "), ";
+                std::cout << '(' << index << ", " << *person << "), ";
             }
             std::cout << '\n';
         }

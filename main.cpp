@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
     commands["nop"] = std::make_unique<PhoneBook::NopCommand>();
 
     if (argc < 2) {
-        std::cout << "Snapshot path required\n";
+        std::cout << "Snapshot path is required\n";
         return 1;
     }
     std::string snapshotPath(argv[1]);
